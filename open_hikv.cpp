@@ -78,11 +78,11 @@ ErrorCode OpenHiKV::ConsumeMessageQueue(int worker_idx) {
 
 ErrorCode OpenHiKV::OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv) {
   // auto store = std::make_unique<plain_vanilla::StoreImpl>();
-  auto store = std::make_unique<pmem::StoreImpl>("/tmp/");
+  auto store = std::make_unique<pmem::StoreImpl>("/mnt/pmem");
   // auto unordered_index =
   // std::make_unique<plain_vanilla::UnorderedIndexImpl>(store.get());
   auto unordered_index = std::make_unique<pmem::UnorderedIndexImpl>(
-      store.get(), "/tmp/", 10000 * 16, 20);
+      store.get(), "/mnt/pmem", 10000 * 16, 20);
   auto ordered_index =
       std::make_unique<plain_vanilla::OrderedIndexImpl>(store.get());
   // auto ordered_index = std::make_unique<pmem::OrderedIndexImpl>(store.get());

@@ -988,7 +988,7 @@ long long bplus_tree_put(struct bplus_tree *tree, my_key_t key, long long data,
         printf("pass\n");
         break;
       } else {
-        printf("fail %u\n", tsx_code);
+        //printf("fail %u\n", tsx_code);
       }
     }
     deinit_pre_alloc_nodes(&nodes);

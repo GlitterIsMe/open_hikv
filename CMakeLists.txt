@@ -18,7 +18,9 @@ message("CMAKE_CXX_FLAGS_MINSIZEREL is ${CMAKE_CXX_FLAGS_MINSIZEREL}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -mcx16")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -mrtm")
 
-add_executable(open_hikv main.cpp
+include_directories(./)
+
+add_library(open_hikv
         error_code.h
         msg_queue.h
         open_hikv.cpp
@@ -27,8 +29,6 @@ add_executable(open_hikv main.cpp
         store.h
         unit.h
         unordered_index.h
-        test/bplustree_test.cpp
-        test/open_hikv_test.cpp
         plain_vanilla_impl/plain_msg_queue_impl.cpp
         plain_vanilla_impl/plain_msg_queue_impl.h
         plain_vanilla_impl/plain_ordered_index_impl.cpp
@@ -52,7 +52,13 @@ add_executable(open_hikv main.cpp
         pmem_impl/pmem_unordered_index_impl.cpp
         pmem_impl/pmem_unordered_index_impl.h)
 
-include_directories(./)
+add_executable(hikv_test
+        main.cpp
+        test/bplustree_test.cpp
+        test/open_hikv_test.cpp
+        )
+
+target_link_libraries(hikv_test open_hikv)
 
 if (CMAKE_VERSION VERSION_LESS "3.1")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")

@@ -9,7 +9,7 @@
 namespace open_hikv {
 
 void RunOpenHiKVTest() {
-  constexpr auto kTestTimes = 10000;
+  constexpr auto kTestTimes = 100;
   constexpr auto kThreadNum = 10;
 
   std::unique_ptr<OpenHiKV> kv;

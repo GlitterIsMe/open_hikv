@@ -17,7 +17,7 @@ class StoreImpl : public Store {
 
   ErrorCode Set(const Slice& k, const Slice& v, uint64_t* offset) override;
 
-  ErrorCode Del(uint64_t offset) { return ErrorCode::kOk; }
+  ErrorCode Del(uint64_t offset) override { return ErrorCode::kOk; }
 
  private:
   enum {
