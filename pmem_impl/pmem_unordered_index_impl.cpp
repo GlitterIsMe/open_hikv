@@ -82,11 +82,12 @@ inline static uint32_t Hash(const char* data, size_t n, uint32_t seed) {
 ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) const {
   auto hash = Hash(k.data(), k.size(), 0) | 1;
   auto& shard = shards_[hash % shards_.size()];
-  HashEntry* entry =
-      &reinterpret_cast<HashEntry*>(shard.data)[hash % kEntryNum];
 
+  uint64_t slot = hash % kEntryNum;
   size_t probe_len = shard.max_probe_len;
-  for (size_t i = 0; i < probe_len; ++i, ++entry) {
+  HashEntry* entry;
+  for (size_t i = 0; i < probe_len; ++i, slot = (slot + 1) % kEntryNum) {
+      entry = &reinterpret_cast<HashEntry*>(shard.data)[slot];
     //__int128_t old_val{0};
     //__int128_t new_val{0};
     //__sync_bool_compare_and_swap(reinterpret_cast<__int128_t*>(entry), old_val, new_val);
@@ -124,11 +125,12 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
 
   auto hash = Hash(k.data(), k.size(), 0) | 1;
   auto& shard = shards_[hash % shards_.size()];
-  HashEntry* entry =
-      &reinterpret_cast<HashEntry*>(shard.data)[hash % kEntryNum];
+  uint64_t slot = hash % kEntryNum;
+  HashEntry* entry;
 
   size_t probe_len = 1;
   while (true) {
+    entry = &reinterpret_cast<HashEntry*>(shard.data)[slot];
     if (entry->offset == 0 && entry->signature == 0) {
       __int128_t old_val{0};
       HashEntry new_entry;
@@ -145,7 +147,8 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
       }
     }
 
-    ++entry;
+    //++entry;
+    slot = (slot + 1) % kEntryNum;
     ++probe_len;
   }
 
