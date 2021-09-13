@@ -1,5 +1,6 @@
 #include "pmem_unordered_index_impl.h"
 
+#include <iostream>
 #include <mutex>
 #include <thread>
 
@@ -37,6 +38,7 @@ UnorderedIndexImpl::UnorderedIndexImpl(Store* store, const std::string& path,
     auto& shard = shards_[i];
     shard.data = addr;
     shard.max_probe_len.store(0);
+    shard.entry_nums.store(0);
     // don't support recovery yet
     jobs.emplace_back(
         [addr, shard_size]() { memset(addr, 0, shard_size + 4096); });
@@ -123,7 +125,8 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
     return code;
   }
 
-  auto hash = Hash(k.data(), k.size(), 0) | 1;
+  //auto hash = Hash(k.data(), k.size(), 0) | 1;
+  auto hash = Hash(k.data(), k.size(), 0);
   auto& shard = shards_[hash % shards_.size()];
   uint64_t slot = hash % kEntryNum;
   HashEntry* entry;
@@ -143,13 +146,23 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
           reinterpret_cast<__int128_t*>(entry), old_val, new_val);
       if (success) {
         PMemPersist(entry);
+        shard.entry_nums++;
         break;
+      } else {
+        printf("CAS failed\n");
       }
     }
 
     //++entry;
     slot = (slot + 1) % kEntryNum;
+    //printf("probe [%lu] [%lu]\n", probe_len, slot);
     ++probe_len;
+    if (probe_len > kEntryNum) {
+      fprintf(stderr, "shard [%lu] probe [%lu] all entry [%lu] and cannot find a empty slot\n",hash % shards_.size(), probe_len, kEntryNum);
+      printShardEntries();
+      exit(-1);
+    }
+    //std::cout << "thread [" << std::this_thread::get_id() << "], probelen[" << probe_len << "] shard [" << hash % shards_.size() << "]\n";
   }
 
   size_t curr_max_proble_len = shard.max_probe_len.load();
@@ -157,9 +170,17 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
     if (shard.max_probe_len.compare_exchange_strong(curr_max_proble_len,
                                                     probe_len)) {
       break;
+      printf("max probe len: %lu\n", shard.max_probe_len.load(std::memory_order_release));
     }
   }
+  //std::cout << "thread [" << std::this_thread::get_id() << "] end set\n";
   return ErrorCode::kOk;
+}
+
+void UnorderedIndexImpl::printShardEntries() {
+  for(size_t i = 0; i < shards_.size(); i++) {
+    printf("shard [%lu] has [%lu] entries\n", i, shards_[i].entry_nums.load(std::memory_order_release));
+  }
 }
 
 }  // namespace open_hikv::pmem

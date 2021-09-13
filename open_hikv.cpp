@@ -86,7 +86,7 @@ ErrorCode OpenHiKV::OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv) {
   auto unordered_index = std::make_unique<pmem::UnorderedIndexImpl>(
       store.get(), "/mnt/pmem", 10000 * 16, 20);
   auto ordered_index =
-      std::make_unique<plain_vanilla::OrderedIndexImpl>(store.get());
+      std::make_unique<pmem::OrderedIndexImpl>(store.get());
   // auto ordered_index = std::make_unique<pmem::OrderedIndexImpl>(store.get());
   // auto message_queue = std::make_unique<plain_vanilla::MessageQueueImpl>();
   auto message_queue = std::make_unique<pmem::MessageQueueImpl>();
@@ -108,7 +108,7 @@ ErrorCode OpenHiKV::OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv, cons
   std::cout << "[Finished] init unordered index at [" << config.pm_path_ << "] shard size [" << config.shard_size / 16 << " entries] shard num [" <<config.shard_num << "]\n";
   std::cout.flush();
   auto ordered_index =
-      std::make_unique<plain_vanilla::OrderedIndexImpl>(store.get());
+      std::make_unique<pmem::OrderedIndexImpl>(store.get());
   std::cout << "[Finished] init ordered index\n";
   std::cout.flush();
   // auto ordered_index = std::make_unique<pmem::OrderedIndexImpl>(store.get());

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 enum {
   BPLUS_TREE_LEAF,
@@ -21,6 +22,8 @@ enum {
 };
 
 #define BPLUS_PRE_ALLOC_FREE_SIZE 16
+
+pthread_mutex_t mutex;
 
 struct pre_alloc_nodes_t {
   struct bplus_non_leaf *non_leaf_nodes[BPLUS_PRE_ALLOC_FREE_SIZE];
@@ -965,6 +968,9 @@ long long bplus_tree_get(struct bplus_tree *tree, my_key_t key,
       break;
     } else {
       //printf("fail %u\n", tsx_code);
+      pthread_mutex_lock(&mutex);
+      data = bplus_tree_search(tree, key, use_strcmp);
+      pthread_mutex_unlock(&mutex);
     }
   }
   if (data) {
@@ -989,6 +995,9 @@ long long bplus_tree_put(struct bplus_tree *tree, my_key_t key, long long data,
         break;
       } else {
         //printf("fail %u\n", tsx_code);
+        pthread_mutex_lock(&mutex);
+        ret = bplus_tree_insert(tree, key, data, &nodes, use_strcmp);
+        pthread_mutex_unlock(&mutex);
       }
     }
     deinit_pre_alloc_nodes(&nodes);
@@ -1017,11 +1026,16 @@ struct bplus_tree *bplus_tree_init(long long order, long long entries) {
       list_init(&tree->list[i]);
     }
   }
-
+  if (pthread_mutex_init(&mutex, NULL) != 0){
+    fprintf(stderr, "init mutex failed\n");
+  };
   return tree;
 }
 
-void bplus_tree_deinit(struct bplus_tree *tree) { free(tree); }
+void bplus_tree_deinit(struct bplus_tree *tree) {
+  free(tree);
+  pthread_mutex_destroy(&mutex);
+}
 
 long long bplus_tree_get_range(struct bplus_tree *tree, my_key_t key1,
                                my_key_t key2) {
