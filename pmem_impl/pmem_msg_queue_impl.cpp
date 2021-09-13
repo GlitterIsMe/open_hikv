@@ -85,6 +85,9 @@ void MessageQueueUnit::MayConsumeNotifyMessages() {
 MessageQueueImpl::MessageQueueImpl()
     : que_vec_(kMessageQueueShardNum), workers_(kMessageQueueShardNum) {}
 
+MessageQueueImpl::MessageQueueImpl(uint64_t shard_num)
+    : que_vec_(shard_num), workers_(shard_num) {}
+
 MessageQueueImpl::~MessageQueueImpl() {
   for (auto& que : que_vec_) {
     que.Push(MessageType::kClose, "", 0);

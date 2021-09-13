@@ -961,10 +961,10 @@ long long bplus_tree_get(struct bplus_tree *tree, my_key_t key,
     if (tsx_code == _XBEGIN_STARTED) {
       data = bplus_tree_search(tree, key, use_strcmp);
       _xend();
-      printf("pass\n");
+      //printf("pass\n");
       break;
     } else {
-      printf("fail %u\n", tsx_code);
+      //printf("fail %u\n", tsx_code);
     }
   }
   if (data) {
@@ -985,7 +985,7 @@ long long bplus_tree_put(struct bplus_tree *tree, my_key_t key, long long data,
       if (tsx_code == _XBEGIN_STARTED) {
         ret = bplus_tree_insert(tree, key, data, &nodes, use_strcmp);
         _xend();
-        printf("pass\n");
+        //printf("pass\n");
         break;
       } else {
         //printf("fail %u\n", tsx_code);

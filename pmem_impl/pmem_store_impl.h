@@ -9,7 +9,8 @@ namespace open_hikv::pmem {
 
 class StoreImpl : public Store {
  public:
-  explicit StoreImpl(const std::string& path) : path_(path) {}
+  explicit StoreImpl(const std::string& path) : path_(path), table_size_((1 << 20) * 4) {}
+  explicit StoreImpl(const std::string& path, uint64_t size) : path_(path), table_size_(size) {}
 
   ~StoreImpl() override = default;
 
@@ -35,6 +36,7 @@ class StoreImpl : public Store {
 
   std::atomic<uint64_t> table_id_{0};
   const std::string path_;
+  const uint64_t table_size_;
 };
 
 }  // namespace open_hikv::pmem

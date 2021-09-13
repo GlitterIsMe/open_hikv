@@ -1,5 +1,5 @@
 #include "open_hikv.h"
-
+#include "pmem_impl/config.h"
 #include <iostream>
 #include <map>
 #include <random>
@@ -13,7 +13,15 @@ void RunOpenHiKVTest() {
   constexpr auto kThreadNum = 10;
 
   std::unique_ptr<OpenHiKV> kv;
-  OpenHiKV::OpenPlainVanillaOpenHiKV(&kv);
+  HiKVConfig config = {
+    .pm_path_ = "/mnt/pmem/hikv",
+    .store_size = 10 * 1024 * 1024 * 1024UL,
+    .shard_size = 10000 * 16,
+    .shard_num = 16,
+    .message_queue_shard_num = 32,
+  };
+
+  OpenHiKV::OpenPlainVanillaOpenHiKV(&kv, config);
 
   std::vector<std::thread> jobs;
   jobs.reserve(kThreadNum);

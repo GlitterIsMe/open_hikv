@@ -43,6 +43,8 @@ class MessageQueueImpl : public MessageQueue {
  public:
   MessageQueueImpl();
 
+  MessageQueueImpl(uint64_t shard_num);
+
   ~MessageQueueImpl();
 
   ErrorCode Push(MessageType type, const Slice& first,
