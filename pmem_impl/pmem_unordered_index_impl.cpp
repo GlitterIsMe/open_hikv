@@ -87,21 +87,20 @@ ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) const {
 
   size_t probe_len = shard.max_probe_len;
   for (size_t i = 0; i < probe_len; ++i, ++entry) {
-    __int128_t old_val{0};
-    __int128_t new_val{0};
-    __sync_bool_compare_and_swap(reinterpret_cast<__int128_t*>(entry), old_val,
-                                 new_val);
-    HashEntry entry_val;
-    memcpy(&entry_val, &old_val, sizeof(entry_val));
+    //__int128_t old_val{0};
+    //__int128_t new_val{0};
+    //__sync_bool_compare_and_swap(reinterpret_cast<__int128_t*>(entry), old_val, new_val);
+    //HashEntry entry_val;
+    //memcpy(&entry_val, &old_val, sizeof(entry_val));
 
-    if (entry_val.offset == 0 && entry_val.signature == 0) {
+    if (entry->offset == 0 && entry->signature == 0) {
       break;
     }
 
-    if (entry_val.signature == hash) {
+    if (entry->signature == hash) {
       Slice exist_k;
       Slice exist_v;
-      auto ec = store_->Get(entry_val.offset, &exist_k, &exist_v);
+      auto ec = store_->Get(entry->offset, &exist_k, &exist_v);
       if (ec != ErrorCode::kOk) {
         return ec;
       }
