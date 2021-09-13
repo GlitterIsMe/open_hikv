@@ -127,7 +127,6 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
   auto& shard = shards_[hash % shards_.size()];
   HashEntry* entry =
       &reinterpret_cast<HashEntry*>(shard.data)[hash % kEntryNum];
-
   size_t probe_len = 1;
   while (true) {
     if (entry->offset == 0 && entry->signature == 0) {
@@ -145,9 +144,10 @@ ErrorCode UnorderedIndexImpl::Set(const Slice& k, const Slice& v,
         break;
       }
     }
-
+    printf("[%lu]before:%p ", probe_len, entry);
     ++entry;
     ++probe_len;
+    printf(" -%p\n", entry);
   }
 
   size_t curr_max_proble_len = shard.max_probe_len.load();

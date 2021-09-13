@@ -18,7 +18,9 @@ message("CMAKE_CXX_FLAGS_MINSIZEREL is ${CMAKE_CXX_FLAGS_MINSIZEREL}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -mcx16")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -mrtm")
 
-include_directories(./)
+include_directories(./ lib/cceh/CCEH-PMDK)
+
+add_subdirectory(lib/cceh)
 
 add_library(open_hikv
         error_code.h
@@ -50,7 +52,12 @@ add_library(open_hikv
         pmem_impl/pmem_store_impl.cpp
         pmem_impl/pmem_store_impl.h
         pmem_impl/pmem_unordered_index_impl.cpp
-        pmem_impl/pmem_unordered_index_impl.h)
+        pmem_impl/pmem_unordered_index_impl.h
+        pmem_impl/pmem_unordered_index_cceh.cc
+        pmem_impl/pmem_unordered_index_cceh.h
+        )
+
+target_link_libraries(open_hikv cceh)
 
 add_executable(hikv_test
         main.cpp
