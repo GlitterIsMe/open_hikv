@@ -82,7 +82,7 @@ inline static uint32_t Hash(const char* data, size_t n, uint32_t seed) {
 }
 
 ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) const {
-  auto hash = Hash(k.data(), k.size(), 0) | 1;
+  auto hash = Hash(k.data(), k.size(), 0);
   auto& shard = shards_[hash % shards_.size()];
 
   uint64_t slot = hash % kEntryNum;
