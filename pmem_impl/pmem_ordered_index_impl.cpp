@@ -40,12 +40,15 @@ ErrorCode OrderedIndexImpl::Scan(
   int pos = start_pos;
   while (leaf != nullptr) {
     int key_size;
-    char* raw = reinterpret_cast<char*>(leaf->key[pos]);
-    memcpy(&key_size, raw, 4);
-    if (!func(Slice(raw+4, key_size), Slice(""))) {
+    int value_size;
+    //char* raw = reinterpret_cast<char*>(leaf->key[pos]);
+    char* raw_value = reinterpret_cast<char*>(leaf->data[pos]);
+    memcpy(&key_size, raw_value, 4);
+    memcpy(&value_size, raw_value + 4, 4);
+    if (!func(Slice(raw_value + 4 * 2, key_size), Slice(raw_value + 4 * 2 + key_size, value_size))) {
       break;
     }
-    printf("%s\n", Slice(raw+4, key_size).ToString().c_str());
+    //printf("%s-%s\n", Slice(raw_value + 4 * 2, key_size).ToString().c_str(), Slice(raw_value + 4 * 2 + key_size, value_size).ToString().c_str());
     ++pos;
     if (pos >= leaf->entries) {
       if (list_is_last(&leaf->link, &btree_->list[0])) {

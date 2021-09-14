@@ -10,7 +10,7 @@ namespace open_hikv {
 
 void RunOpenHiKVTest() {
   constexpr auto kTestTimes = 1000;
-  constexpr auto kThreadNum = 5;
+  constexpr auto kThreadNum = 1;
 
   std::unique_ptr<OpenHiKV> kv;
   HiKVConfig config = {
@@ -45,6 +45,7 @@ void RunOpenHiKVTest() {
       for (; j < kTestTimes; ++j) {
         auto k = gen_random_str();
         auto v = gen_random_str();
+        printf("put %s-%s\n", k.c_str(), v.c_str());
         auto code = kv->Set(k, v);
         if (code != ErrorCode::kOk) {
           __builtin_trap();
