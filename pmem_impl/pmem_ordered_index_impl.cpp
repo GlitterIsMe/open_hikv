@@ -38,6 +38,11 @@ ErrorCode OrderedIndexImpl::Scan(
   int start_pos = 0;
   struct bplus_leaf* leaf = bplus_tree_get_range_start(btree_, reinterpret_cast<uintptr_t>(ptr), &start_pos);
   int pos = start_pos;
+  struct bplus_leaf* init_leaf = leaf;
+    printf("%lld \n", init_leaf->entries);
+    if (pos >= leaf->entries) {
+        return ErrorCode::kOk;
+    }
   while (leaf != nullptr) {
     int key_size;
     int value_size;
