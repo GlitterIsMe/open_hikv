@@ -41,7 +41,6 @@ ErrorCode OrderedIndexImpl::Scan(
   while (leaf != nullptr) {
     int key_size;
     int value_size;
-    //char* raw = reinterpret_cast<char*>(leaf->key[pos]);
     char* raw_value = reinterpret_cast<char*>(leaf->data[pos]);
     memcpy(&key_size, raw_value, 4);
     memcpy(&value_size, raw_value + 4, 4);
