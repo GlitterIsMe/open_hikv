@@ -9,14 +9,14 @@
 namespace open_hikv {
 
 void RunOpenHiKVTest() {
-  constexpr auto kTestTimes = 100000;
-  constexpr auto kThreadNum = 8;
+  constexpr auto kTestTimes = 1000;
+  constexpr auto kThreadNum = 5;
 
   std::unique_ptr<OpenHiKV> kv;
   HiKVConfig config = {
     .pm_path_ = "/mnt/pmem/hikv",
-    .store_size = 10 * 1024 * 1024 * 1024UL,
-    .shard_size = 65536 * 16,
+    .store_size = 1 * 1024 * 1024 * 1024UL,
+    .shard_size = 2000 * 16,
     .shard_num = 16,
     .message_queue_shard_num = 4,
   };
@@ -63,6 +63,20 @@ void RunOpenHiKVTest() {
             std_map.erase(it);
           }
         }
+      }
+
+      auto it = std_map.lower_bound(gen_random_str());
+      if (it != std_map.end()) {
+        int range = 50;
+        int count = 0;
+        auto code = kv->Scan(it->first, [&](const Slice& key, const Slice& val) {
+             count++;
+             return count <= range;
+           });
+        if (code != ErrorCode::kOk) {
+          __builtin_trap();
+        }
+        std_map.erase(it);
       }
 
       // auto it = std_map.begin();

@@ -113,6 +113,7 @@ long long bplus_tree_put(struct bplus_tree *tree, my_key_t key, long long data,
                          int use_strcmp);
 long long bplus_tree_get_range(struct bplus_tree *tree, my_key_t key1,
                                my_key_t key2);
+struct bplus_leaf* bplus_tree_get_range_start(struct bplus_tree *tree, my_key_t key1, int* pos);
 struct bplus_tree *bplus_tree_init(long long order, long long entries);
 void bplus_tree_deinit(struct bplus_tree *tree);
 

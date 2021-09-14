@@ -1083,6 +1083,52 @@ long long bplus_tree_get_range(struct bplus_tree *tree, my_key_t key1,
   return data;
 }
 
+struct bplus_leaf* bplus_tree_get_range_start(struct bplus_tree *tree, my_key_t key1, int* pos) {
+  long long i;
+  struct bplus_leaf* data = NULL;
+  struct bplus_node *node = tree->root;
+  while (node != NULL) {
+    if (is_leaf(node)) {
+      struct bplus_leaf *ln = (struct bplus_leaf *)node;
+      return ln;
+      i = key_binary_search(ln->key, ln->entries, key1, 1);
+      if (i < 0) {
+        i = -i - 1;
+        if (i >= ln->entries) {
+          if (list_is_last(&ln->link, &tree->list[0])) {
+            return NULL;
+          }
+          ln = list_next_entry(ln, link);
+        }
+      }
+      *pos = i;
+      data = ln;
+      break;
+      /*while (ln->key[i] <= max) {
+        data = ln->data[i];
+        if (++i >= ln->entries) {
+          if (list_is_last(&ln->link, &tree->list[0])) {
+            return -1;
+          }
+          ln = list_next_entry(ln, link);
+          i = 0;
+        }
+      }*/
+    } else {
+      struct bplus_non_leaf *nln = (struct bplus_non_leaf *)node;
+      i = key_binary_search(nln->key, nln->children - 1, key1, 1);
+      if (i >= 0) {
+        node = nln->sub_ptr[i + 1];
+      } else {
+        i = -i - 1;
+        node = nln->sub_ptr[i];
+      }
+    }
+  }
+
+  return data;
+}
+
 #ifdef _BPLUS_TREE_DEBUG
 struct node_backlog {
   /* Node backlogged */
