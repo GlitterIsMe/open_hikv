@@ -23,6 +23,8 @@ class UnorderedIndexImpl : public UnorderedIndex {
   ErrorCode Del(const Slice& k) override { return ErrorCode::kOk; }
 
  private:
+
+  void printShardEntries();
   Store* store_;
   const std::string path_;
   const size_t kShardSize;
@@ -31,6 +33,7 @@ class UnorderedIndexImpl : public UnorderedIndex {
   struct Shard {
     char* data;
     std::atomic<size_t> max_probe_len;
+    std::atomic<size_t> entry_nums;
   };
 
   std::vector<Shard> shards_;

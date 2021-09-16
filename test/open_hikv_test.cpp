@@ -1,5 +1,5 @@
 #include "open_hikv.h"
-
+#include "pmem_impl/config.h"
 #include <iostream>
 #include <map>
 #include <random>
@@ -9,11 +9,19 @@
 namespace open_hikv {
 
 void RunOpenHiKVTest() {
-  constexpr auto kTestTimes = 100000;
+  constexpr auto kTestTimes = 1000;
   constexpr auto kThreadNum = 1;
 
   std::unique_ptr<OpenHiKV> kv;
-  OpenHiKV::OpenPlainVanillaOpenHiKV(&kv);
+  HiKVConfig config = {
+    .pm_path_ = "/mnt/pmem/hikv",
+    .store_size = 1 * 1024 * 1024 * 1024UL,
+    .shard_size = 2000 * 16,
+    .shard_num = 16,
+    .message_queue_shard_num = 4,
+  };
+
+  OpenHiKV::OpenPlainVanillaOpenHiKV(&kv, config);
 
   std::vector<std::thread> jobs;
   jobs.reserve(kThreadNum);
@@ -37,6 +45,7 @@ void RunOpenHiKVTest() {
       for (; j < kTestTimes; ++j) {
         auto k = gen_random_str();
         auto v = gen_random_str();
+        printf("put %s-%s\n", k.c_str(), v.c_str());
         auto code = kv->Set(k, v);
         if (code != ErrorCode::kOk) {
           __builtin_trap();
@@ -55,6 +64,20 @@ void RunOpenHiKVTest() {
             std_map.erase(it);
           }
         }
+      }
+
+      auto it = std_map.lower_bound(gen_random_str());
+      if (it != std_map.end()) {
+        int range = 50;
+        int count = 0;
+        auto code = kv->Scan(it->first, [&](const Slice& key, const Slice& val) {
+             count++;
+             return count <= range;
+           });
+        if (code != ErrorCode::kOk) {
+          __builtin_trap();
+        }
+        std_map.erase(it);
       }
 
       // auto it = std_map.begin();

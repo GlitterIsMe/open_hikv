@@ -43,6 +43,8 @@ class MessageQueueImpl : public MessageQueue {
  public:
   MessageQueueImpl();
 
+  MessageQueueImpl(uint64_t shard_num);
+
   ~MessageQueueImpl();
 
   ErrorCode Push(MessageType type, const Slice& first,
@@ -61,6 +63,7 @@ class MessageQueueImpl : public MessageQueue {
  private:
   mutable std::vector<MessageQueueUnit> que_vec_;
   std::vector<std::unique_ptr<std::thread>> workers_;
+  uint64_t shard_num_;
 };
 
 }  // namespace open_hikv::pmem

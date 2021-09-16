@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 enum {
   BPLUS_TREE_LEAF,
@@ -21,6 +22,8 @@ enum {
 };
 
 #define BPLUS_PRE_ALLOC_FREE_SIZE 16
+
+pthread_mutex_t mutex;
 
 struct pre_alloc_nodes_t {
   struct bplus_non_leaf *non_leaf_nodes[BPLUS_PRE_ALLOC_FREE_SIZE];
@@ -961,10 +964,14 @@ long long bplus_tree_get(struct bplus_tree *tree, my_key_t key,
     if (tsx_code == _XBEGIN_STARTED) {
       data = bplus_tree_search(tree, key, use_strcmp);
       _xend();
-      printf("pass\n");
+      //printf("pass\n");
       break;
     } else {
-      printf("fail %u\n", tsx_code);
+      //printf("fail %u\n", tsx_code);
+      pthread_mutex_lock(&mutex);
+      data = bplus_tree_search(tree, key, use_strcmp);
+      pthread_mutex_unlock(&mutex);
+      break;
     }
   }
   if (data) {
@@ -985,10 +992,14 @@ long long bplus_tree_put(struct bplus_tree *tree, my_key_t key, long long data,
       if (tsx_code == _XBEGIN_STARTED) {
         ret = bplus_tree_insert(tree, key, data, &nodes, use_strcmp);
         _xend();
-        printf("pass\n");
+        //printf("pass\n");
         break;
       } else {
         //printf("fail %u\n", tsx_code);
+        pthread_mutex_lock(&mutex);
+        ret = bplus_tree_insert(tree, key, data, &nodes, use_strcmp);
+        pthread_mutex_unlock(&mutex);
+        break;
       }
     }
     deinit_pre_alloc_nodes(&nodes);
@@ -996,7 +1007,23 @@ long long bplus_tree_put(struct bplus_tree *tree, my_key_t key, long long data,
   } else {
     struct defer_free_nodes_t nodes;
     init_defer_free_nodes(&nodes);
-    long long ret = bplus_tree_delete(tree, key, &nodes, 0);
+    long long ret;
+      while (1) {
+          unsigned int tsx_code = _xbegin();
+          if (tsx_code == _XBEGIN_STARTED) {
+              ret = bplus_tree_delete(tree, key, &nodes, 1);
+              _xend();
+              //printf("pass\n");
+              break;
+          } else {
+              //printf("fail %u\n", tsx_code);
+              pthread_mutex_lock(&mutex);
+              ret = bplus_tree_delete(tree, key, &nodes, 1);
+              pthread_mutex_unlock(&mutex);
+              break;
+          }
+      }
+    //long long ret = bplus_tree_delete(tree, key, &nodes, 0);
     deinit_defer_free_nodes(&nodes);
     return ret;
   }
@@ -1017,11 +1044,16 @@ struct bplus_tree *bplus_tree_init(long long order, long long entries) {
       list_init(&tree->list[i]);
     }
   }
-
+  if (pthread_mutex_init(&mutex, NULL) != 0){
+    fprintf(stderr, "init mutex failed\n");
+  };
   return tree;
 }
 
-void bplus_tree_deinit(struct bplus_tree *tree) { free(tree); }
+void bplus_tree_deinit(struct bplus_tree *tree) {
+  free(tree);
+  pthread_mutex_destroy(&mutex);
+}
 
 long long bplus_tree_get_range(struct bplus_tree *tree, my_key_t key1,
                                my_key_t key2) {
@@ -1057,6 +1089,81 @@ long long bplus_tree_get_range(struct bplus_tree *tree, my_key_t key1,
     } else {
       struct bplus_non_leaf *nln = (struct bplus_non_leaf *)node;
       i = key_binary_search(nln->key, nln->children - 1, min, 0);
+      if (i >= 0) {
+        node = nln->sub_ptr[i + 1];
+      } else {
+        i = -i - 1;
+        node = nln->sub_ptr[i];
+      }
+    }
+  }
+
+  return data;
+}
+
+struct bplus_leaf* bplus_tree_get_range_start(struct bplus_tree *tree, my_key_t key1, int* pos) {
+  long long i;
+  struct bplus_leaf* data = NULL;
+  struct bplus_node *node = tree->root;
+  while (node != NULL) {
+    if (is_leaf(node)) {
+      struct bplus_leaf *ln = (struct bplus_leaf *)node;
+      //return ln;
+      //i = key_binary_search(ln->key, ln->entries, key1, 1);
+        while (1) {
+            unsigned int tsx_code = _xbegin();
+            if (tsx_code == _XBEGIN_STARTED) {
+                i = key_binary_search(ln->key, ln->entries, key1, 1);
+                _xend();
+                //printf("pass\n");
+                break;
+            } else {
+                //printf("fail %u\n", tsx_code);
+                pthread_mutex_lock(&mutex);
+                i = key_binary_search(ln->key, ln->entries, key1, 1);
+                pthread_mutex_unlock(&mutex);
+                break;
+            }
+        }
+      if (i < 0) {
+        i = -i - 1;
+        if (i >= ln->entries) {
+          if (list_is_last(&ln->link, &tree->list[0])) {
+            return NULL;
+          }
+          ln = list_next_entry(ln, link);
+        }
+      }
+      *pos = i;
+      data = ln;
+      break;
+      /*while (ln->key[i] <= max) {
+        data = ln->data[i];
+        if (++i >= ln->entries) {
+          if (list_is_last(&ln->link, &tree->list[0])) {
+            return -1;
+          }
+          ln = list_next_entry(ln, link);
+          i = 0;
+        }
+      }*/
+    } else {
+      struct bplus_non_leaf *nln = (struct bplus_non_leaf *)node;
+        while (1) {
+            unsigned int tsx_code = _xbegin();
+            if (tsx_code == _XBEGIN_STARTED) {
+                i = key_binary_search(nln->key, nln->children - 1, key1, 1);
+                _xend();
+                //printf("pass\n");
+                break;
+            } else {
+                //printf("fail %u\n", tsx_code);
+                pthread_mutex_lock(&mutex);
+                i = key_binary_search(nln->key, nln->children - 1, key1, 1);
+                pthread_mutex_unlock(&mutex);
+            }
+        }
+      //i = key_binary_search(nln->key, nln->children - 1, key1, 1);
       if (i >= 0) {
         node = nln->sub_ptr[i + 1];
       } else {

@@ -83,7 +83,10 @@ void MessageQueueUnit::MayConsumeNotifyMessages() {
 }
 
 MessageQueueImpl::MessageQueueImpl()
-    : que_vec_(kMessageQueueShardNum), workers_(kMessageQueueShardNum) {}
+    : que_vec_(kMessageQueueShardNum), workers_(kMessageQueueShardNum), shard_num_(kMessageQueueShardNum) {}
+
+MessageQueueImpl::MessageQueueImpl(uint64_t shard_num)
+    : que_vec_(shard_num), workers_(shard_num), shard_num_(shard_num) {}
 
 MessageQueueImpl::~MessageQueueImpl() {
   for (auto& que : que_vec_) {
@@ -150,15 +153,16 @@ ErrorCode MessageQueueImpl::Pop(int worker_idx) {
 
 ErrorCode MessageQueueImpl::WaitDrain() {
   size_t rand_num = 0;
-  std::array<uint64_t, kMessageQueueShardNum> ver_arr{};
-  for (size_t i = 0; i < kMessageQueueShardNum; ++i) {
+  std::vector<uint64_t> ver_arr;
+  ver_arr.reserve(shard_num_);
+  for (size_t i = 0; i < shard_num_; ++i) {
     uint64_t ver = que_vec_[i].GetCurrentVersion();
     ver_arr[i] = ver;
     rand_num += ver;
   }
   size_t n = 0;
-  while (n != kMessageQueueShardNum) {
-    size_t idx = rand_num++ % kMessageQueueShardNum;
+  while (n != shard_num_) {
+    size_t idx = rand_num++ % shard_num_;
     que_vec_[idx].WaitDrain(ver_arr[idx]);
     ++n;
   }
@@ -167,7 +171,7 @@ ErrorCode MessageQueueImpl::WaitDrain() {
 
 ErrorCode MessageQueueImpl::RegisterConsumeFunction(
     std::function<ErrorCode(int)> func) {
-  for (int i = 0; i < kMessageQueueShardNum; ++i) {
+  for (uint64_t i = 0; i < shard_num_; ++i) {
     workers_[i] = std::make_unique<std::thread>(
         [&, func](int nth) {
           auto& que = que_vec_[nth];

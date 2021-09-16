@@ -7,6 +7,7 @@
 #include "ordered_index.h"
 #include "store.h"
 #include "unordered_index.h"
+#include "pmem_impl/config.h"
 
 namespace open_hikv {
 
@@ -39,6 +40,8 @@ class OpenHiKV {
   ErrorCode ConsumeMessageQueue(int worker_idx);
 
   static ErrorCode OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv);
+
+  static ErrorCode OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv, const HiKVConfig& config);
 
   static ErrorCode OpenPMemOpenHiKV(std::unique_ptr<OpenHiKV>* kv);
 
