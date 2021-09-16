@@ -18,6 +18,11 @@ message("CMAKE_CXX_FLAGS_MINSIZEREL is ${CMAKE_CXX_FLAGS_MINSIZEREL}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -mcx16")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -mrtm")
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBPMEMOBJ REQUIRED libpmemobj)
+include_directories(${LIBPMEMOBJ_INCLUDE_DIRS})
+link_libraries(${LIBPMEMOBJ_LIBRARIES})
+
 include_directories(./ lib/cceh/CCEH-PMDK)
 
 add_subdirectory(lib/cceh)

@@ -16,7 +16,7 @@ class UnorderedIndexImpl : public UnorderedIndex {
 
   ~UnorderedIndexImpl() override = default;
 
-  ErrorCode Get(const Slice& k, Slice* v) const override;
+  ErrorCode Get(const Slice& k, Slice* v) override;
 
   ErrorCode Set(const Slice& k, const Slice& v, uint64_t* offset) override;
 

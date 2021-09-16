@@ -79,7 +79,7 @@ inline static uint32_t Hash(const char* data, size_t n, uint32_t seed) {
   return h;
 }
 
-ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) const {
+ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) {
   auto hash = Hash(k.data(), k.size(), 0) | 1;
   auto& shard = shards_[hash % shards_.size()];
   HashEntry* entry =

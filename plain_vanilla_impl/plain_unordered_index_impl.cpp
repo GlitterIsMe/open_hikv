@@ -2,7 +2,7 @@
 
 namespace open_hikv::plain_vanilla {
 
-ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) const {
+ErrorCode UnorderedIndexImpl::Get(const Slice& k, Slice* v) {
   std::lock_guard<std::mutex> guard(mtx_);
   auto it = key2off_map_.find(k.ToString());
   if (it != key2off_map_.end()) {

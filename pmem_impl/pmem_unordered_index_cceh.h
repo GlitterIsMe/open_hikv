@@ -21,7 +21,7 @@ class UnorderedIndexCCEH : public UnorderedIndex {
 
   ~UnorderedIndexCCEH() override =default;
 
-  ErrorCode Get(const Slice& k, Slice* v) const override;
+  ErrorCode Get(const Slice& k, Slice* v) override;
 
   ErrorCode Set(const Slice& k, const Slice& v, uint64_t* offset) override;
 
@@ -32,7 +32,7 @@ class UnorderedIndexCCEH : public UnorderedIndex {
   const std::string pool_path_;
 
   PMEMobjpool *pop_;
-  TOID(CCEH) cceh_;
+  TOID(CCEH) cceh_ {OID_NULL};
   pm::LogStore* log_;
 };
 
