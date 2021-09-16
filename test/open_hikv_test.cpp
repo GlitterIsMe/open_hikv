@@ -18,7 +18,12 @@ void RunOpenHiKVTest() {
     .store_size = 1 * 1024 * 1024 * 1024UL,
     .shard_size = 2000 * 16,
     .shard_num = 16,
-    .message_queue_shard_num = 4,
+    .message_queue_shard_num = 1,
+
+    .log_path_ = "/mnt/pmem/hikv",
+    .log_size_ = 60UL * 1024 * 1024 * 1024,
+    .cceh_path_ = "/mnt/pmem/hikv",
+    .cceh_size_ = 40UL * 1024 * 1024 * 1024,
   };
 
   OpenHiKV::OpenPlainVanillaOpenHiKV(&kv, config);
@@ -45,19 +50,22 @@ void RunOpenHiKVTest() {
       for (; j < kTestTimes; ++j) {
         auto k = gen_random_str();
         auto v = gen_random_str();
-        printf("put %s-%s\n", k.c_str(), v.c_str());
+        //printf("put [%s]-[%s]\n", k.c_str(), v.c_str());
         auto code = kv->Set(k, v);
         if (code != ErrorCode::kOk) {
           __builtin_trap();
         }
         std_map[k] = v;
       }
+      printf("finish put\n");
 
       for (int k = 0; k < kTestTimes; ++k) {
         if (one_in_two()) {
           auto it = std_map.lower_bound(gen_random_str());
           if (it != std_map.end()) {
-            auto code = kv->Del(it->first);
+            Slice v;
+            auto code = kv->Get(it->first, &v);
+            //printf("get [%s]-[%s]\n", it->first.c_str(), v.ToString().c_str());
             if (code != ErrorCode::kOk) {
               __builtin_trap();
             }
@@ -65,6 +73,7 @@ void RunOpenHiKVTest() {
           }
         }
       }
+      printf("finish get\n");
 
       auto it = std_map.lower_bound(gen_random_str());
       if (it != std_map.end()) {

@@ -1161,6 +1161,7 @@ struct bplus_leaf* bplus_tree_get_range_start(struct bplus_tree *tree, my_key_t 
                 pthread_mutex_lock(&mutex);
                 i = key_binary_search(nln->key, nln->children - 1, key1, 1);
                 pthread_mutex_unlock(&mutex);
+                break;
             }
         }
       //i = key_binary_search(nln->key, nln->children - 1, key1, 1);

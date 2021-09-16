@@ -1,6 +1,8 @@
-#include <iostream>
-
 #include "open_hikv.h"
+
+#include <pmem_impl/pmem_unordered_index_cceh.h>
+
+#include <iostream>
 
 #include "plain_vanilla_impl/plain_msg_queue_impl.h"
 #include "plain_vanilla_impl/plain_ordered_index_impl.h"
@@ -99,16 +101,17 @@ ErrorCode OpenHiKV::OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv) {
 ErrorCode OpenHiKV::OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv, const HiKVConfig& config) {
   // auto store = std::make_unique<plain_vanilla::StoreImpl>();
   auto store = std::make_unique<pmem::StoreImpl>(config.pm_path_, config.store_size);
-  std::cout << "[Finished] init PM store at [" << config.pm_path_ << "] size [" << config.store_size / 1024 / 1024.0 << " MB]\n";
-  std::cout.flush();
+  std::cout << "[Finished] init useless PM store at [" << config.pm_path_ << "] size [" << config.store_size / 1024 / 1024.0 << " MB]\n";
+  //std::cout.flush();
   // auto unordered_index =
   // std::make_unique<plain_vanilla::UnorderedIndexImpl>(store.get());
-  auto unordered_index = std::make_unique<pmem::UnorderedIndexImpl>(
-      store.get(), config.pm_path_, config.shard_size, config.shard_num);
-  std::cout << "[Finished] init unordered index at [" << config.pm_path_ << "] shard size [" << config.shard_size / 16 << " entries] shard num [" <<config.shard_num << "]\n";
+  auto unordered_index = std::make_unique<pmem::UnorderedIndexCCEH>(config.log_path_, config.log_size_, config.cceh_path_, config.cceh_size_);
+  std::cout << "[Finished] init log based CCEH\n"
+               << "->log path [" << config.log_path_ << "] log size [" << config.log_size_ / (1024 * 1024 * 1024.0) << " GB]\n"
+               << "->cceh path [" << config.cceh_path_ << "] cceh size [" << config.cceh_size_ / (1024 * 1024 * 1024.0) << " GB]\n";
   std::cout.flush();
   auto ordered_index =
-      std::make_unique<pmem::OrderedIndexImpl>(store.get());
+      std::make_unique<pmem::OrderedIndexImpl>();
   std::cout << "[Finished] init ordered index\n";
   std::cout.flush();
   // auto ordered_index = std::make_unique<pmem::OrderedIndexImpl>(store.get());

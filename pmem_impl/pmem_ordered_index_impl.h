@@ -9,6 +9,7 @@ namespace open_hikv::pmem {
 class OrderedIndexImpl : public OrderedIndex {
  public:
   explicit OrderedIndexImpl(Store* store);
+  explicit OrderedIndexImpl();
 
   ~OrderedIndexImpl() override;
 

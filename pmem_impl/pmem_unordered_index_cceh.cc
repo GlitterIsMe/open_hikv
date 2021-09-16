@@ -13,7 +13,7 @@ inline uint64_t DecodeSize(const char* raw) {
     return 0;
   }
   uint64_t size;
-  memcpy(&size, global_log_->raw(), sizeof(uint64_t));
+  memcpy(&size, raw, sizeof(uint64_t));
   return size;
 }
 
@@ -21,9 +21,9 @@ UnorderedIndexCCEH::UnorderedIndexCCEH(const std::string &log_path,
                                        size_t log_size,
                                        const std::string &pool_path,
                                        size_t pool_size)
-    : log_path_(std::move(log_path)),
-      pool_path_(std::move(pool_path)){
-  global_log_ = new pm::LogStore(log_path, log_size);
+    : log_path_(log_path + "/pool"),
+      pool_path_(pool_path + "/cceh"){
+  global_log_ = new pm::LogStore(log_path_, log_size);
   log_ = global_log_;
 
   if (access(pool_path_.c_str(), 0) != 0) {
@@ -53,7 +53,7 @@ ErrorCode UnorderedIndexCCEH::Set(const Slice &k, const Slice &v, uint64_t *offs
 
   pm::PmAddr addr = log_->Alloc(whole_key.size() + whole_value.size());
   log_->Append(addr, whole_key + whole_value);
-
+  *offset = addr;
   D_RW(cceh_)->Insert(pop_, addr, (char*)(addr + whole_key.size()));
   return ErrorCode::kOk;
 }
@@ -66,10 +66,10 @@ ErrorCode UnorderedIndexCCEH::Get(const Slice &k, Slice *v) {
   Key_t lookup_key = (Key_t)(lookup);
   auto ret = D_RW(cceh_)->Get(lookup_key);
   if (ret) {
-    uint64_t size = DecodeSize(ret);
+    uint64_t size = DecodeSize(global_log_->raw() + (uint64_t)ret);
     char* res = new char[size];
     memcpy(res, global_log_->raw() + (uint64_t)ret, size);
-    *v = Slice(res, size);
+    *v = Slice(res + sizeof(uint64_t), size);
     delete[] lookup;
     return ErrorCode::kOk;
   } else {
