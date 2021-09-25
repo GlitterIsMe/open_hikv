@@ -44,7 +44,7 @@ ErrorCode OrderedIndexImpl::Scan(
   struct bplus_leaf* leaf = bplus_tree_get_range_start(btree_, reinterpret_cast<uintptr_t>(ptr), &start_pos);
   int pos = start_pos;
   struct bplus_leaf* init_leaf = leaf;
-    printf("%lld \n", init_leaf->entries);
+    //printf("%lld \n", init_leaf->entries);
     if (pos >= leaf->entries) {
         return ErrorCode::kOk;
     }
