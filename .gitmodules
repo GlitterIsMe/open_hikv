@@ -1,4 +1,4 @@
 [submodule "lib/cceh"]
 	path = lib/cceh
 	url = https://github.com/GlitterIsMe/CCEH.git
-	branch = var_length_key
+	branch = for-hikv

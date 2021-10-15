@@ -36,10 +36,12 @@ ErrorCode OrderedIndexImpl::Scan(
     const Slice& k,
     const std::function<bool(const Slice&, const Slice&)>& func) const {
   // 1. btree_get k , return the data node that containes the smallest key that larger than k;
-  char* ptr = (char*)malloc(4 + k.size());
+    assert(k.size() == 8);
+  char* ptr = (char*)malloc(4 + 16);
   int len = k.size();
+    memset(ptr, 0, 4 + 16);
   memcpy(ptr, &len, 4);
-  memcpy(ptr + 4, k.data(), k.size());
+  memcpy(ptr + 4, k.data(), 8);
   int start_pos = 0;
   struct bplus_leaf* leaf = bplus_tree_get_range_start(btree_, reinterpret_cast<uintptr_t>(ptr), &start_pos);
   int pos = start_pos;
@@ -52,9 +54,9 @@ ErrorCode OrderedIndexImpl::Scan(
     uint64_t key_size;
     uint64_t value_size;
     char* raw_value = global_log_->raw() + leaf->data[pos];
-    memcpy(&key_size, raw_value, 8);
-    memcpy(&value_size, raw_value + key_size + 8, 8);
-    if (!func(Slice(raw_value + 8, key_size), Slice(raw_value + 8 * 2 + key_size, value_size))) {
+    memcpy(&key_size, raw_value, 4);
+    memcpy(&value_size, raw_value + key_size + 4, 8);
+    if (!func(Slice(raw_value + 4, key_size), Slice(raw_value + 4 * 2 + key_size, value_size))) {
       break;
     }
     //printf("%s-%s\n", Slice(raw_value + 8, key_size).ToString().c_str(), Slice(raw_value + 8 * 2 + key_size, value_size).ToString().c_str());
