@@ -36,12 +36,12 @@ ErrorCode OrderedIndexImpl::Scan(
     const Slice& k,
     const std::function<bool(const Slice&, const Slice&)>& func) const {
   // 1. btree_get k , return the data node that containes the smallest key that larger than k;
-    assert(k.size() == 8);
-  char* ptr = (char*)malloc(4 + 16);
+    //assert(k.size() == 8);
+  char* ptr = (char*)malloc(4 + k.size());
   int len = k.size();
-    memset(ptr, 0, 4 + 16);
+    memset(ptr, 0, 4 + k.size());
   memcpy(ptr, &len, 4);
-  memcpy(ptr + 4, k.data(), 8);
+  memcpy(ptr + 4, k.data(), k.size());
   int start_pos = 0;
   struct bplus_leaf* leaf = bplus_tree_get_range_start(btree_, reinterpret_cast<uintptr_t>(ptr), &start_pos);
   int pos = start_pos;
@@ -51,11 +51,11 @@ ErrorCode OrderedIndexImpl::Scan(
         return ErrorCode::kOk;
     }
   while (leaf != nullptr) {
-    uint64_t key_size;
-    uint64_t value_size;
+    int key_size;
+    int value_size;
     char* raw_value = global_log_->raw() + leaf->data[pos];
     memcpy(&key_size, raw_value, 4);
-    memcpy(&value_size, raw_value + key_size + 4, 8);
+    memcpy(&value_size, raw_value + key_size + 4, 4);
     if (!func(Slice(raw_value + 4, key_size), Slice(raw_value + 4 * 2 + key_size, value_size))) {
       break;
     }
@@ -63,12 +63,14 @@ ErrorCode OrderedIndexImpl::Scan(
     ++pos;
     if (pos >= leaf->entries) {
       if (list_is_last(&leaf->link, &btree_->list[0])) {
+          delete[] ptr;
         return ErrorCode::kOk;
       }
       leaf = list_next_entry(leaf, link);
       pos = 0;
     }
   }
+  delete[] ptr;
   return ErrorCode::kOk;
 }
 

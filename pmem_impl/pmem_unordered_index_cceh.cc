@@ -12,9 +12,9 @@ inline uint64_t DecodeSize(const char* raw) {
   if (raw == nullptr) {
     return 0;
   }
-  uint64_t size;
+  int size;
   memcpy(&size, raw, pm::ENCODE_SIZE);
-  return size;
+  return (uint64_t)size;
 }
 
 UnorderedIndexCCEH::UnorderedIndexCCEH(const std::string &log_path,
@@ -54,16 +54,18 @@ ErrorCode UnorderedIndexCCEH::Set(const Slice &k, const Slice &v, uint64_t *offs
   pm::PmAddr addr = log_->Alloc(whole_key.size() + whole_value.size());
   log_->Append(addr, whole_key + whole_value);
   *offset = addr;
-    {
-        Key_t lookup = (Key_t)(global_log_->raw() + addr);
-        D_RW(cceh_)->Delete(pop_, lookup);
-    }
-  D_RW(cceh_)->Insert(pop_, addr, (char*)(addr + whole_key.size()));
-    /*{
-        Key_t lookup = (Key_t)(global_log_->raw() + addr);
-        auto res = D_RW(cceh_)->Get(lookup);
-        assert((uint64_t)res == addr + whole_key.size());
-    }*/
+    //{
+    //    Key_t lookup = (Key_t)(global_log_->raw() + addr);
+    //    D_RW(cceh_)->Delete(pop_, lookup);
+    //}
+  D_RW(cceh_)->Insert(pop_, addr, (char*)(addr));
+    //printf("insert ret %lu\n", (uint64_t)addr);
+    //{
+    //    Key_t lookup = (Key_t)(global_log_->raw() + addr);
+    //    auto res = D_RW(cceh_)->Get(lookup);
+    //    printf("insert check ret %lu\n", (uint64_t)res);
+        //assert((uint64_t)res == addr + whole_key.size());
+    //}
   return ErrorCode::kOk;
 }
 
@@ -74,14 +76,19 @@ ErrorCode UnorderedIndexCCEH::Get(const Slice &k, Slice *v) {
   memcpy(lookup, whole_key.c_str(), whole_key.size());
   Key_t lookup_key = (Key_t)(lookup);
   auto ret = D_RW(cceh_)->Get(lookup_key);
+    //printf("get ret %lu\n", (uint64_t)ret);
   if (ret) {
-    uint64_t size = DecodeSize(global_log_->raw() + (uint64_t)ret);
-    char* res = new char[size];
-    memcpy(res, global_log_->raw() + (uint64_t)ret + pm::ENCODE_SIZE, size);
-    *v = Slice(res, size);
+    uint64_t key_size = DecodeSize(global_log_->raw() + (uint64_t)ret);
+      //printf("get key size %lu\n", key_size);
+      uint64_t value_size = DecodeSize(global_log_->raw() + (uint64_t)ret + key_size + pm::ENCODE_SIZE);
+      //printf("get key size %lu\n", value_size);
+    char* res = new char[value_size];
+    memcpy(res, global_log_->raw() + (uint64_t)ret + 2 * pm::ENCODE_SIZE + key_size, value_size);
+    *v = Slice(res, value_size);
     delete[] lookup;
     return ErrorCode::kOk;
   } else {
+    delete[] lookup;
     return ErrorCode::kNotFound;
   }
 }

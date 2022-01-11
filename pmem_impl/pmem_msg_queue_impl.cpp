@@ -14,6 +14,9 @@ ErrorCode MessageQueueUnit::Push(MessageType type, const Slice& first,
   std::lock_guard<std::mutex> guard(mtx_);
   que_.emplace_back(type, first.ToString(), second);
   ++ver_;
+    /*if (ver_.load(std::memory_order_release) % 10000 == 0){
+        printf("version %lu applied %lu\n", ver_.load(std::memory_order_release),  applied_ver_.load(std::memory_order_release));
+    }*/
   if (waiting_) {
     cv_.notify_all();
   }
@@ -40,6 +43,9 @@ ErrorCode MessageQueueUnit::Pop(bool* more) {
   }
   que_.pop_front();
   ++applied_ver_;
+    /*if (applied_ver_.load(std::memory_order_release) % 10000 == 0){
+        printf("applied version %lu\n", applied_ver_.load(std::memory_order_release));
+    }*/
   MayConsumeNotifyMessages();
   *more = !que_.empty();
   return ErrorCode::kOk;
