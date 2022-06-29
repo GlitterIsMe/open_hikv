@@ -36,8 +36,8 @@ inline void* pmem_map_file(const char* path, size_t len, int flags, mode_t mode,
   if (fd < 0) {
     return nullptr;
   }
-  ftruncate(fd, len);
-  int r = fallocate(fd, 0, 0, static_cast<off_t>(len));
+  int r = ftruncate(fd, len);
+  r = fallocate(fd, 0, 0, static_cast<off_t>(len));
   if (r != 0) {
     close(fd);
     return nullptr;
