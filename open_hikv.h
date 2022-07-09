@@ -39,6 +39,10 @@ class OpenHiKV {
 
   ErrorCode ConsumeMessageQueue(int worker_idx);
 
+  ErrorCode Flush() {
+      return message_queue_->WaitDrain();
+  }
+
   static ErrorCode OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv);
 
   static ErrorCode OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv, const HiKVConfig& config);

@@ -25,7 +25,9 @@ ErrorCode OpenHiKV::Set(const Slice& k, const Slice& v) {
   if (code != ErrorCode::kOk) {
     return code;
   }
-  return message_queue_->Push(MessageType::kSet, k, offset);
+  code = message_queue_->Push(MessageType::kSet, k, offset);
+  return code;
+  //return message_queue_->Push(MessageType::kSet, k, offset);
 }
 
 ErrorCode OpenHiKV::Del(const Slice& k) {
