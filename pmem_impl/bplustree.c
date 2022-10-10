@@ -25,28 +25,42 @@ enum {
 
 pthread_mutex_t mutex;
 
+long long total_allocated_ = 0;
+long long total_leaf_nodes_ = 0;
+long long total_nonleaf_nodes_ = 0;
+int leaf_size = 0;
+int nonleaf_size = 0;
+
 struct pre_alloc_nodes_t {
   struct bplus_non_leaf *non_leaf_nodes[BPLUS_PRE_ALLOC_FREE_SIZE];
   struct bplus_leaf *leaf_nodes[BPLUS_PRE_ALLOC_FREE_SIZE];
 };
 
 static void init_pre_alloc_nodes(struct pre_alloc_nodes_t *nodes) {
+    if (leaf_size == 0) {
+        leaf_size = sizeof(struct bplus_leaf);
+        nonleaf_size = sizeof(struct bplus_leaf);
+    }
   for (int i = 0; i < BPLUS_PRE_ALLOC_FREE_SIZE; ++i) {
     struct bplus_non_leaf *node = calloc(1, sizeof(*node));
+    total_allocated_ += sizeof(*node);
     assert(node != NULL);
     list_init(&node->link);
     node->type = BPLUS_TREE_NON_LEAF;
     node->parent_key_idx = -1;
     nodes->non_leaf_nodes[i] = node;
   }
+  total_nonleaf_nodes_ += BPLUS_PRE_ALLOC_FREE_SIZE;
   for (int i = 0; i < BPLUS_PRE_ALLOC_FREE_SIZE; ++i) {
     struct bplus_leaf *node = calloc(1, sizeof(*node));
+    total_allocated_ += sizeof(*node);
     assert(node != NULL);
     list_init(&node->link);
     node->type = BPLUS_TREE_LEAF;
     node->parent_key_idx = -1;
     nodes->leaf_nodes[i] = node;
   }
+  total_leaf_nodes_ += BPLUS_PRE_ALLOC_FREE_SIZE;
 }
 
 static void deinit_pre_alloc_nodes(struct pre_alloc_nodes_t *nodes) {
@@ -54,12 +68,16 @@ static void deinit_pre_alloc_nodes(struct pre_alloc_nodes_t *nodes) {
     struct bplus_non_leaf *node = nodes->non_leaf_nodes[i];
     if (node != NULL) {
       free(node);
+      total_allocated_ -= sizeof(*node);
+      total_nonleaf_nodes_--;
     }
   }
   for (int i = 0; i < BPLUS_PRE_ALLOC_FREE_SIZE; ++i) {
     struct bplus_leaf *node = nodes->leaf_nodes[i];
     if (node != NULL) {
       free(node);
+      total_allocated_ -= sizeof(*node);
+      total_leaf_nodes_--;
     }
   }
 }

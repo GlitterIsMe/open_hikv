@@ -133,4 +133,10 @@ ErrorCode OpenHiKV::OpenPMemOpenHiKV(std::unique_ptr<OpenHiKV>* kv) {
   return ErrorCode::kOk;
 }
 
+void OpenHiKV::PrintUsage() {
+    printf("total allocated %lld bytes, %lf MB\n", total_allocated_, total_allocated_ / 1024.0 / 1024.0);
+    printf("total allocated leaf nodes %llu, size %d bytes\n", total_leaf_nodes_, leaf_size);
+    printf("total allocated nonleaf nodes %llu, size %d bytes\n", total_nonleaf_nodes_, nonleaf_size);
+}
+
 }  // namespace open_hikv

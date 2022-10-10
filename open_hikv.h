@@ -43,6 +43,8 @@ class OpenHiKV {
       return message_queue_->WaitDrain();
   }
 
+  void PrintUsage();
+
   static ErrorCode OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv);
 
   static ErrorCode OpenPlainVanillaOpenHiKV(std::unique_ptr<OpenHiKV>* kv, const HiKVConfig& config);

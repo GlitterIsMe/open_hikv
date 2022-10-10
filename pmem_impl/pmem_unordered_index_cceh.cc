@@ -9,7 +9,7 @@
 
 namespace open_hikv::pmem {
 
-    const size_t initialSize = 1024;
+    const size_t initialSize = 1024 * 16;
 
     inline uint64_t DecodeSize(const char *raw) {
         if (raw == nullptr) {

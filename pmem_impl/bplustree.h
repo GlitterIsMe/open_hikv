@@ -16,6 +16,12 @@ extern "C" {
 
 typedef long long my_key_t;
 
+extern long long total_allocated_;
+extern long long total_leaf_nodes_;
+extern long long total_nonleaf_nodes_;
+extern int leaf_size;
+extern int nonleaf_size;
+
 struct list_head {
   struct list_head *prev, *next;
 };

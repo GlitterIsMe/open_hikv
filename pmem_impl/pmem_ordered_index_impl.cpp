@@ -14,7 +14,10 @@ namespace open_hikv::pmem {
         btree_ = bplus_tree_init(16, 16);
     }
 
-    OrderedIndexImpl::~OrderedIndexImpl() { bplus_tree_deinit(btree_); }
+    OrderedIndexImpl::~OrderedIndexImpl() {
+        bplus_tree_deinit(btree_);
+        printf("total allocated %lld bytes, %lf MB\n", total_allocated_, total_allocated_ / 1024.0 / 1024.0);
+    }
 
 // it leaks!
     ErrorCode OrderedIndexImpl::Set(const Slice &k, uint64_t offset) {
